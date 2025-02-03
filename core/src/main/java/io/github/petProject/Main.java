@@ -4,6 +4,8 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
@@ -13,6 +15,8 @@ import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.BoxShapeBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import io.github.petProject.enums.CameraMode;
+import io.github.petProject.terrain.HeightMapTerrain;
+import io.github.petProject.terrain.Terrain;
 import net.mgsx.gltf.loaders.gltf.GLTFLoader;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
@@ -58,10 +62,27 @@ public class Main extends ApplicationAdapter implements AnimationController.Anim
     private float angleAroundPlayer = 0f;
     private float angleBehindPlayer = 0f;
     private boolean anyKeyPressed = false;
+    private Music backgroundMusic;
+    private Sound stepsSound;
+
+
+    // Terrain
+    private Terrain terrain;
+    private Scene terrainScene;
 
 
     @Override
     public void create() {
+
+//        backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/background.mp3"));
+//        backgroundMusic.setLooping(true);
+//        backgroundMusic.setVolume(0.1f);
+//        backgroundMusic.play();
+
+
+        stepsSound = Gdx.audio.newSound(Gdx.files.internal("audio/steps.mp3"));
+        Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+
         sceneAsset = new GLTFLoader().load(Gdx.files.internal("models/Human/Human.gltf"));
         PlayerScene = new Scene(sceneAsset.scene);
         sceneManager = new SceneManager();
@@ -114,25 +135,37 @@ public class Main extends ApplicationAdapter implements AnimationController.Anim
         skybox = new SceneSkybox(environmentCubemap);
         sceneManager.setSkyBox(skybox);
 
-        buildBoxes();
+//        buildBoxes();
+        createTerrain();
     }
 
-    private void buildBoxes() {
-        ModelBuilder modelBuilder = new ModelBuilder();
-        modelBuilder.begin();
-
-        for(int x = 0; x < 100; x += 10){
-            for(int z = 0; z < 100; z += 10){
-                Material material = new Material();
-                material.set(PBRColorAttribute.createBaseColorFactor(Color.RED));
-                MeshPartBuilder builder = modelBuilder.part(x + "," + z, GL20.GL_TRIANGLES, VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal, material);
-                BoxShapeBuilder.build(builder, x, 0, z, 1f, 1f, 1f);
-            }
+    private void createTerrain() {
+        if(terrain != null){
+            terrain.dispose();
+            sceneManager.removeScene(terrainScene);
         }
 
-        ModelInstance model = new ModelInstance(modelBuilder.end());
-        sceneManager.addScene(new Scene(model));
+        terrain = new HeightMapTerrain(new Pixmap(Gdx.files.internal("textures/heightmap.png")),5f);
+        terrainScene = new Scene(terrain.getModelInstance());
+        sceneManager.addScene(terrainScene);
     }
+
+//    private void buildBoxes() {
+//        ModelBuilder modelBuilder = new ModelBuilder();
+//        modelBuilder.begin();
+//
+//        for(int x = 0; x < 100; x += 10){
+//            for(int z = 0; z < 100; z += 10){
+//                Material material = new Material();
+//                material.set(PBRColorAttribute.createBaseColorFactor(Color.RED));
+//                MeshPartBuilder builder = modelBuilder.part(x + "," + z, GL20.GL_TRIANGLES, VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal, material);
+//                BoxShapeBuilder.build(builder, x, 0, z, 1f, 1f, 1f);
+//            }
+//        }
+//
+//        ModelInstance model = new ModelInstance(modelBuilder.end());
+//        sceneManager.addScene(new Scene(model));
+//    }
 
     @Override
     public void resize(int width, int height) {
@@ -234,7 +267,6 @@ public class Main extends ApplicationAdapter implements AnimationController.Anim
             PlayerScene.animationController.action("RunJump",1,0.9f,this,0.2f);
             anyKeyPressed = true;
         }
-
         if (Gdx.input.isKeyPressed(Input.Keys.W) && !Gdx.input.isKeyPressed(Input.Keys.SPACE)){
             PlayerScene.animationController.animate("Running", 1, this,0.5f);
             moveTranslation.z += speed * deltaTime;
@@ -278,6 +310,12 @@ public class Main extends ApplicationAdapter implements AnimationController.Anim
 
         // Update vector position
         PlayerScene.modelInstance.transform.getTranslation(currentPosition);
+
+        float height = terrain.getHeightAtWorldCoord(currentPosition.x, currentPosition.z);
+
+        currentPosition.y = height;
+
+        PlayerScene.modelInstance.transform.setTranslation(currentPosition);
 
         // Clear the move translation out
         moveTranslation.set(0,0,0);
