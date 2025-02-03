@@ -51,8 +51,8 @@ public class Main extends ApplicationAdapter {
 
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         float d = 0.2f;
-        camera.near = d / 1000f;
-        camera.far = 200;
+        camera.near = d / 1f;
+        camera.far = 10000;
         sceneManager.setCamera(camera);
         camera.position.set(0,0.5f,4f);
 
