@@ -28,6 +28,7 @@ import net.mgsx.gltf.scene3d.scene.SceneManager;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 
@@ -94,6 +95,8 @@ public class Main extends ApplicationAdapter implements AnimationController.Anim
         config.numBones = 67;
         sceneManager.setShaderProvider(new DefaultShaderProvider(config));
 
+        PlayerScene.modelInstance.transform.setTranslation(80,0,80);
+
         camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         float d = 0.2f;
         camera.near = 1f;
@@ -136,16 +139,21 @@ public class Main extends ApplicationAdapter implements AnimationController.Anim
         sceneManager.setSkyBox(skybox);
 
 //        buildBoxes();
-        createTerrain();
+        createTerrain(5f, 0, 0, 0);
+        createTerrain(15f, 50 , 0 ,50);
+        createTerrain(30f, 25, 0 ,25);
     }
 
-    private void createTerrain() {
+    private void createTerrain(float a, int one, int two, int three) {
         if(terrain != null){
             terrain.dispose();
             sceneManager.removeScene(terrainScene);
         }
-
-        terrain = new HeightMapTerrain(new Pixmap(Gdx.files.internal("textures/heightmap.png")),5f);
+        ArrayList<Integer> corners = new ArrayList<Integer>();
+        corners.add(one);
+        corners.add(two);
+        corners.add(three);
+        terrain = new HeightMapTerrain(new Pixmap(Gdx.files.internal("textures/heightmap.png")),a,corners);
         terrainScene = new Scene(terrain.getModelInstance());
         sceneManager.addScene(terrainScene);
     }

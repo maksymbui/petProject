@@ -14,6 +14,9 @@ import com.mygdx.game.terrains.HeightField;
 import io.github.petProject.Main;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HeightMapTerrain extends Terrain{
 
     private static final Vector3 c00 = new Vector3();
@@ -23,7 +26,7 @@ public class HeightMapTerrain extends Terrain{
 
     private HeightField field;
 
-    public HeightMapTerrain(Pixmap data, float magnitude){
+    public HeightMapTerrain(Pixmap data, float magnitude, ArrayList<Integer> corners){
         this.size = 200;
         this.width = data.getWidth();
         this.heightMagnitude = magnitude;
@@ -52,6 +55,8 @@ public class HeightMapTerrain extends Terrain{
         mb.begin();
         mb.part("terrain", field.mesh, GL20.GL_TRIANGLES, material);
         modelInstance = new ModelInstance(mb.end());
+
+        modelInstance.transform.setTranslation(corners.get(0), corners.get(1), corners.get(2));
     }
 
     @Override
